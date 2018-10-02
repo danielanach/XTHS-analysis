@@ -1,5 +1,5 @@
-# Project Title
+# XTHS analysis pipeline
 
-Add a description for this project here.
+Analysis pipeline for Agilent SureSelectXT HS sequencing data.
 
 Shareable Project powered by <https://spro.io>
