@@ -1,0 +1,4 @@
+SAMPLES: ""
+REF: "/Volumes/oncogxA/resources/references-and-indexes/hg19/hg19.fa"
+BED: "../data/3131601_AIO_SolidTumor_Covered.bed"
+AGENT_DIR: "/Users/DanielaNachmanson/work/AGeNT"
