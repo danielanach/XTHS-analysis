@@ -1,0 +1,12 @@
+{
+  "name": "",
+  "description": "",
+  "git_url": "",
+  "version": "0.0.1",
+  "keywords": [],
+  "downloads": {},
+  "commands": {},
+  "environment_history": [
+    "conda install --prefix PROJECT_ENVIRONMENT_DIRECTORY_PATH --channel bioconda --yes --quiet snakemake"
+  ]
+}

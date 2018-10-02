@@ -1,0 +1,33 @@
+# See https://git-scm.com/docs/gitignore to learn more about .gitignore file.
+
+# ==============================================================================
+# Track only files transferable with git (smaller files that are <100MB); for
+# larger files, which git cannot transfer, specify their download links in the
+# package.json so spro can get them.
+# ==============================================================================
+data/*
+
+# ==============================================================================
+# Do not track environment files because spro manages environment/.
+# ==============================================================================
+environment/*
+
+# ==============================================================================
+# Git ignores empty folders, so add a hidden file .gitkeep to the default
+# project folders to avoid them from being ignored.
+# ==============================================================================
+!data/.gitkeep
+!environment/.gitkeep
+!code/.gitkeep
+!output/.gitkeep
+!media/.gitkeep
+
+# ==============================================================================
+# Ignore some additional stuff.
+# ==============================================================================
+.DS_Store
+.idea
+
+# ==============================================================================
+# Additional rules.
+# ==============================================================================
