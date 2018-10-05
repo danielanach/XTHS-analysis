@@ -1,52 +1,85 @@
-from snakemake.utils import validate
-
-validate(config)
-
 SAMPLES=config["SAMPLES"]
-REF=config["REF_GENOME"]
+REF_GENOME=config["REF_GENOME"]
 BED=config["BED"]
 AGENT_DIR=config["AGENT_DIR"]
+FGBIO_DIR="/home/dnachman/XTHS-analysis/code/fgbio"
+OUT_DIR=config["OUT_DIR"]
 
 rule all:
     input:
-        expand("{sample}.LocatIt.bam",sample=SAMPLES)
+        expand(OUT_DIR + "/bam/{sample}.umi.bam",sample=SAMPLES)
 
 rule TrimFastq:
     input:
-        fq_one="{sample}_R1_001.fastq.gz",
-        fq_two="{sample}_R3_001.fastq.gz"
+        fq_one=OUT_DIR + "/fastq/{sample}_R1_001.fastq.gz",
+        fq_two=OUT_DIR + "/fastq/{sample}_R3_001.fastq.gz"
     output:
+        OUT_DIR + "/trimmed/{sample}_R1_001.fastq.gz",
+        OUT_DIR + "/trimmed/{sample}_R3_001.fastq.gz",
     shell:
-        "java -jar ${{AGENT_DIR}}/SurecallTrimmer.jar "
+        "java -jar {AGENT_DIR}/SurecallTrimmer_v4.0.1.jar "
         "-fq1 {input.fq_one} -fq2 {input.fq_two} "
-        "-xt -out_loc ${{OUT_PATH}}"
+        "-xt "
+        "-qualityTrimming 10 -minFractionRead 50 "
+        "-out_loc {OUT_DIR}/trimmed/"
 
 rule AlignFastq:
     input:
-        "{sample}_R1_001.fastq.gz",
-        "{sample}_R3_001.fastq.gz"
+        OUT_DIR + "/trimmed/{sample}_R1_001.fastq.gz",
+        OUT_DIR + "/trimmed/{sample}_R3_001.fastq.gz"
     output:
-        "{sample}.bam"
+        OUT_DIR + "/bam/{sample}.bam"
     shell:
-        "bwa mem -t 2 -M -I 200,100,600,1 "
-        "-R @RG\tID:1\tSM:Tissue\tPL:ILLUMINA\tLB:XT "
-        "{REF_GENOME} "
-        "{input} "
+        "bwa mem -t 2 -M -R \"@RG\\tID:tissue\\tSM:tissue\" "
+        "{REF_GENOME} {input} | "
+        "samtools view -bh - > {output}"
 
-rule ExtractUMI:
+rule Sort:
     input:
-        bam="{sample}.bam",
-        umi_fastq="{sample}_R2_.fastq.gz",
-        bed=REF_BED
+        OUT_DIR + "/bam/{sample}.bam"
     output:
-        "{sample}.LocatIt.bam"
+        bam=OUT_DIR + "/bam/{sample}.sort.bam"
     shell:
-        "java –Xmx12G -jar ${AGENT_DIR}/LocatIt.jar "
-        "[-X temp_directory] [-t temp_directory for keeps] "
-        "-L [-PM:xm,Q:xq..] [-C] [-i] "
-        " -IB -OB [-r] [-d NN] [-2] "
-        "[-q 25][-m 2][-c 2500][-H sam_header_file] "
-        "-b {input.bed} "
-        "-o {output} "
-        "{input.bam} "
-        "{input.umi_fastq} "
+        "samtools sort {input} > {output.bam}"
+
+rule Index:
+    input:
+        OUT_DIR + "/bam/{sample}.sort.bam"
+    output:
+        OUT_DIR + "/bam/{sample}.sort.bam.bai"
+    shell:
+        "samtools index {input}"
+
+
+rule AnnotateBam:
+    input:
+        bam=OUT_DIR + "/bam/{sample}.sort.bam",
+        umi_fastq=OUT_DIR + "/fastq/{sample}_R2_001.fastq.gz"
+    output:
+        OUT_DIR + "/bam/{sample}.umi.bam"
+    shell:
+        "java -Xmx15g -jar {FGBIO_DIR}/target/scala-2.12/fgbio-0.7.0-9b76546-SNAPSHOT.jar "
+        "AnnotateBamWithUmis -i {input.bam} "
+        "-f {input.umi_fastq} "
+        "-o {output} > fgbio_umi.txt"
+        "\n"
+        "samtools index {output}"
+
+
+# rule ExtractUMI:
+#     input:
+#         bam=OUT_DIR + "/bam/{sample}.sort.bam",
+#         umi_fastq=OUT_DIR + "/fastq/{sample}_R2_001.fastq.gz"
+#     output:
+#         OUT_DIR + "/bam/{sample}.LocatIt.bam"
+#     shell:
+#         "java –Xmx10G -jar {AGENT_DIR}/LocatIt_v4.0.1.jar "
+#         "-X /scratch/dana/temp/ -t /scratch/dana/bam/intermediate/ "
+#         "-PM:MI,Q:cQ,I:cD -C -IB -OB -r -d 1 "
+#         "-b {BED} "
+#         "-o {output} "
+#         "-l {BED} "
+#         "{input.bam} "
+#         "{input.umi_fastq} "
+#         "\n"
+#         "samtools index {output}"

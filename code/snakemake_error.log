@@ -1,0 +1,21 @@
+nohup: ignoring input
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	4	AnnotateBam
+	1	all
+	5
+
+[Fri Oct  5 12:36:33 2018]
+rule AnnotateBam:
+    input: /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.sort.bam, /scratch/dana/fastq/1285_covaris2_DNA_200ng_S4_L008_R2_001.fastq.gz
+    output: /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.umi.bam
+    jobid: 2
+    wildcards: sample=1285_covaris2_DNA_200ng_S4_L008
+
+/etc/host.conf: line 3: bad command `nospoof on'
+[2018/10/05 12:36:38 | FgBioMain | Info] Executing AnnotateBamWithUmis from fgbio version 0.7.0-9b76546-SNAPSHOT as dnachman@Oncogx-0029.ucsd.edu on JRE 1.8.0_152-release-1056-b12 with snappy
+[2018/10/05 12:36:38 | AnnotateBamWithUmis | Info] Reading in UMIs from FASTQ.

@@ -1,0 +1,120 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 8
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	3	AlignFastq
+	3	Index
+	3	Sort
+	1	all
+	10
+
+[Thu Oct  4 11:17:24 2018]
+rule AlignFastq:
+    input: /scratch/dana/trimmed/1285_covaris2_DNA_10ng_1_S1_L008_R1_001.fastq.gz, /scratch/dana/trimmed/1285_covaris2_DNA_10ng_1_S1_L008_R3_001.fastq.gz
+    output: /scratch/dana/bam/1285_covaris2_DNA_10ng_1_S1_L008.bam
+    jobid: 11
+    wildcards: sample=1285_covaris2_DNA_10ng_1_S1_L008
+
+
+[Thu Oct  4 11:17:24 2018]
+rule AlignFastq:
+    input: /scratch/dana/trimmed/1285_covaris2_DNA_50ng_S3_L008_R1_001.fastq.gz, /scratch/dana/trimmed/1285_covaris2_DNA_50ng_S3_L008_R3_001.fastq.gz
+    output: /scratch/dana/bam/1285_covaris2_DNA_50ng_S3_L008.bam
+    jobid: 9
+    wildcards: sample=1285_covaris2_DNA_50ng_S3_L008
+
+
+[Thu Oct  4 11:17:24 2018]
+rule AlignFastq:
+    input: /scratch/dana/trimmed/1285_covaris2_DNA_10ng_2_S2_L008_R1_001.fastq.gz, /scratch/dana/trimmed/1285_covaris2_DNA_10ng_2_S2_L008_R3_001.fastq.gz
+    output: /scratch/dana/bam/1285_covaris2_DNA_10ng_2_S2_L008.bam
+    jobid: 12
+    wildcards: sample=1285_covaris2_DNA_10ng_2_S2_L008
+
+[Thu Oct  4 14:29:20 2018]
+Finished job 11.
+1 of 10 steps (10%) done
+
+[Thu Oct  4 14:29:20 2018]
+rule Sort:
+    input: /scratch/dana/bam/1285_covaris2_DNA_10ng_1_S1_L008.bam
+    output: /scratch/dana/bam/1285_covaris2_DNA_10ng_1_S1_L008.sort.bam
+    jobid: 7
+    wildcards: sample=1285_covaris2_DNA_10ng_1_S1_L008
+
+[Thu Oct  4 14:44:05 2018]
+Finished job 12.
+2 of 10 steps (20%) done
+
+[Thu Oct  4 14:44:05 2018]
+rule Sort:
+    input: /scratch/dana/bam/1285_covaris2_DNA_10ng_2_S2_L008.bam
+    output: /scratch/dana/bam/1285_covaris2_DNA_10ng_2_S2_L008.sort.bam
+    jobid: 8
+    wildcards: sample=1285_covaris2_DNA_10ng_2_S2_L008
+
+[Thu Oct  4 14:56:39 2018]
+Finished job 7.
+3 of 10 steps (30%) done
+
+[Thu Oct  4 14:56:39 2018]
+rule Index:
+    input: /scratch/dana/bam/1285_covaris2_DNA_10ng_1_S1_L008.sort.bam
+    output: /scratch/dana/bam/1285_covaris2_DNA_10ng_1_S1_L008.sort.bam.bai
+    jobid: 3
+    wildcards: sample=1285_covaris2_DNA_10ng_1_S1_L008
+
+[Thu Oct  4 14:58:54 2018]
+Finished job 3.
+4 of 10 steps (40%) done
+[Thu Oct  4 15:13:22 2018]
+Finished job 8.
+5 of 10 steps (50%) done
+
+[Thu Oct  4 15:13:22 2018]
+rule Index:
+    input: /scratch/dana/bam/1285_covaris2_DNA_10ng_2_S2_L008.sort.bam
+    output: /scratch/dana/bam/1285_covaris2_DNA_10ng_2_S2_L008.sort.bam.bai
+    jobid: 4
+    wildcards: sample=1285_covaris2_DNA_10ng_2_S2_L008
+
+[Thu Oct  4 15:15:31 2018]
+Finished job 4.
+6 of 10 steps (60%) done
+[Thu Oct  4 15:22:38 2018]
+Finished job 9.
+7 of 10 steps (70%) done
+
+[Thu Oct  4 15:22:38 2018]
+rule Sort:
+    input: /scratch/dana/bam/1285_covaris2_DNA_50ng_S3_L008.bam
+    output: /scratch/dana/bam/1285_covaris2_DNA_50ng_S3_L008.sort.bam
+    jobid: 5
+    wildcards: sample=1285_covaris2_DNA_50ng_S3_L008
+
+[Thu Oct  4 16:00:51 2018]
+Finished job 5.
+8 of 10 steps (80%) done
+
+[Thu Oct  4 16:00:51 2018]
+rule Index:
+    input: /scratch/dana/bam/1285_covaris2_DNA_50ng_S3_L008.sort.bam
+    output: /scratch/dana/bam/1285_covaris2_DNA_50ng_S3_L008.sort.bam.bai
+    jobid: 1
+    wildcards: sample=1285_covaris2_DNA_50ng_S3_L008
+
+[Thu Oct  4 16:03:27 2018]
+Finished job 1.
+9 of 10 steps (90%) done
+
+[Thu Oct  4 16:03:27 2018]
+localrule all:
+    input: /scratch/dana/bam/1285_covaris2_DNA_10ng_1_S1_L008.sort.bam.bai, /scratch/dana/bam/1285_covaris2_DNA_10ng_2_S2_L008.sort.bam.bai, /scratch/dana/bam/1285_covaris2_DNA_50ng_S3_L008.sort.bam.bai, /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.sort.bam.bai
+    jobid: 0
+
+[Thu Oct  4 16:03:27 2018]
+Finished job 0.
+10 of 10 steps (100%) done
+Complete log: /home/dnachman/XTHS-analysis/code/.snakemake/log/2018-10-04T111724.485308.snakemake.log

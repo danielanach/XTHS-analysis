@@ -1,0 +1,31 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1
+Rules claiming more threads will be scaled down.
+Job counts:
+	count	jobs
+	4	AnnotateBam
+	1	all
+	5
+
+[Fri Oct  5 11:13:53 2018]
+rule AnnotateBam:
+    input: /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.sort.bam, /scratch/dana/fastq/1285_covaris2_DNA_200ng_S4_L008_R2_001.fastq.gz
+    output: /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.umi.bam
+    jobid: 3
+    wildcards: sample=1285_covaris2_DNA_200ng_S4_L008
+
+[Fri Oct  5 11:13:53 2018]
+Error in rule AnnotateBam:
+    jobid: 3
+    output: /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.umi.bam
+
+RuleException:
+CalledProcessError in line 66 of /home/dnachman/XTHS-analysis/code/pipeline.smk:
+Command ' set -euo pipefail;  java -Xmxg30 -jar /home/dnachman/XTHS-analysis/code/fgbio/target/scala-2.12/fgbio-0.7.0-9b76546-SNAPSHOT.jar AnnotateBamWithUmis -i /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.sort.bam -f /scratch/dana/fastq/1285_covaris2_DNA_200ng_S4_L008_R2_001.fastq.gz -o /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.umi.bam > fgbio_umi.txt
+samtools index /scratch/dana/bam/1285_covaris2_DNA_200ng_S4_L008.umi.bam ' returned non-zero exit status 1.
+  File "/home/dnachman/XTHS-analysis/code/pipeline.smk", line 66, in __rule_AnnotateBam
+  File "/home/dnachman/miniconda3/lib/python3.6/concurrent/futures/thread.py", line 56, in run
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: /home/dnachman/XTHS-analysis/code/.snakemake/log/2018-10-05T111353.202612.snakemake.log
