@@ -58,7 +58,7 @@ rule AnnotateBam:
     output:
         OUT_DIR + "/bam/{sample}.umi.bam"
     shell:
-        "java -Xmx15g -jar {FGBIO_DIR}/target/scala-2.12/fgbio-0.7.0-9b76546-SNAPSHOT.jar "
+        "java -Xmx60g -XX:+UseParallelGC -jar {FGBIO_DIR}/target/scala-2.12/fgbio-0.7.0-9b76546-SNAPSHOT.jar "
         "AnnotateBamWithUmis -i {input.bam} "
         "-f {input.umi_fastq} "
         "-o {output} > fgbio_umi.txt"
