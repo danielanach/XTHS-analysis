@@ -4,32 +4,34 @@ RG=config["RG_NAME"]
 
 FQ_ONE=config["FQ_READ_ONE"]
 FQ_TWO=config["FQ_READ_TWO"]
-FQ_UMI=config["FQ_READ_UMI"]"
+FQ_UMI=config["FQ_READ_UMI"]
 
 A_FWD=config["ADAPTER_FWD"]
 A_REV=config["ADAPTER_REV"]
 
 REF=config["REF_GENOME"]
 BED=config["BED"]
+INTERVAL_LIST=config["BED"]
 
 FGBIO_JAR=config["FGBIO_JAR"]
 
 THREADS=config["THREADS"]
 RAM=config["RAM"]
 
-OUT_DIR=config["OUT_DIR"]
+OUT_DIR=config["PROJECT_DIR"]
 
 rule all:
     input:
-        expand(OUT_DIR + "/bam/{sample}.consensus.aligned.bam", sample=SAMPLES)
+        expand(OUT_DIR + "/bam/{sample}.consensus.aligned.bam", sample=SAMPLES),
+        expand(OUT_DIR + "/metrics/{sample}.familysize.txt", sample=SAMPLES)
 
 rule TrimFastq:
     input:
-        fq_one=OUT_DIR + "/fastq/{sample}_" + FQ_ONE + "_" + LANE + ".fastq.gz",
-        fq_two=OUT_DIR + "/fastq/{sample}_" + FQ_TWO + "_" + LANE + ".fastq.gz"
+        fq_one=OUT_DIR + "/fastq/{sample}_" + LANE + "_" + FQ_ONE + "_001.fastq.gz",
+        fq_two=OUT_DIR + "/fastq/{sample}_" + LANE + "_" + FQ_TWO + "_001.fastq.gz"
     output:
-        fq_one=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_ONE + "_" + ".fastq.gz",
-        fq_two=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_TWO + "_" + ".fastq.gz"
+        fq_one=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_ONE + ".fastq.gz",
+        fq_two=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_TWO + ".fastq.gz"
     shell:
         "cutadapt "
         "-a {A_FWD} -A {A_REV} "
@@ -72,7 +74,7 @@ rule SetMateInformation:
 rule AnnotateBam:
     input:
         bam=OUT_DIR + "/bam/{sample}.mate.bam",
-        fq_umi=OUT_DIR + "/fastq/{sample}_" + FQ_UMI + "_" + LANE + ".fastq.gz"
+        fq_umi=OUT_DIR + "/fastq/{sample}_" + LANE + "_" + FQ_UMI + "_001.fastq.gz"
     output:
         OUT_DIR + "/bam/{sample}.umi.bam"
     shell:
@@ -109,8 +111,8 @@ rule BamToFastq:
     input:
         OUT_DIR + "/bam/{sample}.consensus.bam"
     output:
-        fq_one=OUT_DIR + "/fastq/{sample}.consensus.{FQ_ONE}.fastq",
-        fq_two=OUT_DIR + "/fastq/{sample}.consensus.{FQ_TWO}.fastq"
+        fq_one=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_ONE + ".fastq",
+        fq_two=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_TWO + ".fastq"
     shell:
         "picard SamToFastq "
         "I={input} "
@@ -119,21 +121,8 @@ rule BamToFastq:
 
 rule AlignConsensusFastq:
     input:
-        fq_one=OUT_DIR + "/fastq/{sample}.consensus.{FQ_ONE}.fastq",
-        fq_two=OUT_DIR + "/fastq/{sample}.consensus.{FQ_TWO}.fastq"
-    output:
-        OUT_DIR + "/bam/{sample}.consensus.aligned.bam"
-    shell:
-        "bwa mem "
-        "-t {THREADS} -M "
-        "-R \"@RG\\tID:{RG}\\tSM:{RG}\" "
-        "{REF} {input.fq_one} {input.fq_two} "
-        "| samtools view -bh - > {output}"
-
-rule ClipBam:
-    input:
-        fq_one=OUT_DIR + "/fastq/{sample}.consensus.{FQ_ONE}.fastq,
-        fq_two=OUT_DIR + "/fastq/{sample}.consensus.{FQ_TWO}.fastq
+        fq_one=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_ONE + ".fastq",
+        fq_two=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_TWO + ".fastq"
     output:
         OUT_DIR + "/bam/{sample}.consensus.aligned.bam"
     shell:
