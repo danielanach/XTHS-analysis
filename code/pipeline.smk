@@ -1,85 +1,144 @@
 SAMPLES=config["SAMPLES"]
-REF_GENOME=config["REF_GENOME"]
+LANE=config["LANE"] #Need to support multiple lane
+RG=config["RG_NAME"]
+
+FQ_ONE=config["FQ_READ_ONE"]
+FQ_TWO=config["FQ_READ_TWO"]
+FQ_UMI=config["FQ_READ_UMI"]"
+
+A_FWD=config["ADAPTER_FWD"]
+A_REV=config["ADAPTER_REV"]
+
+REF=config["REF_GENOME"]
 BED=config["BED"]
-AGENT_DIR=config["AGENT_DIR"]
-FGBIO_DIR="/home/dnachman/XTHS-analysis/code/fgbio"
+
+FGBIO_JAR=config["FGBIO_JAR"]
+
+THREADS=config["THREADS"]
+RAM=config["RAM"]
+
 OUT_DIR=config["OUT_DIR"]
 
 rule all:
     input:
-        expand(OUT_DIR + "/bam/{sample}.umi.bam",sample=SAMPLES)
+        expand(OUT_DIR + "/bam/{sample}.consensus.aligned.bam", sample=SAMPLES)
 
 rule TrimFastq:
     input:
-        fq_one=OUT_DIR + "/fastq/{sample}_R1_001.fastq.gz",
-        fq_two=OUT_DIR + "/fastq/{sample}_R3_001.fastq.gz"
+        fq_one=OUT_DIR + "/fastq/{sample}_" + FQ_ONE + "_" + LANE + ".fastq.gz",
+        fq_two=OUT_DIR + "/fastq/{sample}_" + FQ_TWO + "_" + LANE + ".fastq.gz"
     output:
-        OUT_DIR + "/trimmed/{sample}_R1_001.fastq.gz",
-        OUT_DIR + "/trimmed/{sample}_R3_001.fastq.gz",
+        fq_one=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_ONE + "_" + ".fastq.gz",
+        fq_two=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_TWO + "_" + ".fastq.gz"
     shell:
-        "java -jar {AGENT_DIR}/SurecallTrimmer_v4.0.1.jar "
-        "-fq1 {input.fq_one} -fq2 {input.fq_two} "
-        "-xt "
-        "-qualityTrimming 10 -minFractionRead 50 "
-        "-out_loc {OUT_DIR}/trimmed/"
+        "cutadapt "
+        "-a {A_FWD} -A {A_REV} "
+        "-o {output.fq_one} -p {output.fq_two} "
+        "{input.fq_one} {input.fq_two}"
 
 rule AlignFastq:
     input:
-        OUT_DIR + "/trimmed/{sample}_R1_001.fastq.gz",
-        OUT_DIR + "/trimmed/{sample}_R3_001.fastq.gz"
+        fq_one=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_ONE + ".fastq.gz",
+        fq_two=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_TWO + ".fastq.gz"
     output:
         OUT_DIR + "/bam/{sample}.bam"
     shell:
-        "bwa mem -t 2 -M -R \"@RG\\tID:tissue\\tSM:tissue\" "
-        "{REF_GENOME} {input} | "
-        "samtools view -bh - > {output}"
+        "bwa mem "
+        "-t {THREADS} -M "
+        "-R \"@RG\\tID:{RG}\\tSM:{RG}\" "
+        "{REF} {input.fq_one} {input.fq_two} "
+        "| samtools view -bh - > {output}"
 
 rule Sort:
     input:
         OUT_DIR + "/bam/{sample}.bam"
     output:
-        bam=OUT_DIR + "/bam/{sample}.sort.bam"
+        OUT_DIR + "/bam/{sample}.sort.bam"
     shell:
-        "samtools sort {input} > {output.bam}"
+        "picard SortSam "
+        "I={input} O={output} "
+        "SO=queryname"
 
-rule Index:
+rule SetMateInformation:
     input:
         OUT_DIR + "/bam/{sample}.sort.bam"
     output:
-        OUT_DIR + "/bam/{sample}.sort.bam.bai"
+        OUT_DIR + "/bam/{sample}.mate.bam"
     shell:
-        "samtools index {input}"
-
+        "java -Xmx{RAM}g -jar {FGBIO_JAR} "
+        "SetMateInformation "
+        "-i {input} -o {output} "
 
 rule AnnotateBam:
     input:
-        bam=OUT_DIR + "/bam/{sample}.sort.bam",
-        umi_fastq=OUT_DIR + "/fastq/{sample}_R2_001.fastq.gz"
+        bam=OUT_DIR + "/bam/{sample}.mate.bam",
+        fq_umi=OUT_DIR + "/fastq/{sample}_" + FQ_UMI + "_" + LANE + ".fastq.gz"
     output:
         OUT_DIR + "/bam/{sample}.umi.bam"
     shell:
-        "java -Xmx60g -XX:+UseParallelGC -jar {FGBIO_DIR}/target/scala-2.12/fgbio-0.7.0-9b76546-SNAPSHOT.jar "
-        "AnnotateBamWithUmis -i {input.bam} "
-        "-f {input.umi_fastq} "
-        "-o {output} > fgbio_umi.txt"
-        "\n"
-        "samtools index {output}"
+        "java -Xmx{RAM}g -jar {FGBIO_JAR} "
+        "AnnotateBamWithUmis "
+        "-i {input.bam} -f {input.fq_umi} "
+        "-o {output} "
 
+rule GroupReadsByUmi:
+    input:
+        OUT_DIR + "/bam/{sample}.umi.bam"
+    output:
+        bam=OUT_DIR + "/bam/{sample}.grouped.bam",
+        metrics=OUT_DIR + "/metrics/{sample}.familysize.txt"
+    shell:
+        "java -Xmx{RAM}g -jar {FGBIO_JAR} "
+        "GroupReadsByUmi "
+        "-i {input} -o {output.bam} "
+        "-f {output.metrics} "
+	    "-m 10 -s Edit -e 5 "
 
-# rule ExtractUMI:
-#     input:
-#         bam=OUT_DIR + "/bam/{sample}.sort.bam",
-#         umi_fastq=OUT_DIR + "/fastq/{sample}_R2_001.fastq.gz"
-#     output:
-#         OUT_DIR + "/bam/{sample}.LocatIt.bam"
-#     shell:
-#         "java –Xmx10G -jar {AGENT_DIR}/LocatIt_v4.0.1.jar "
-#         "-X /scratch/dana/temp/ -t /scratch/dana/bam/intermediate/ "
-#         "-PM:MI,Q:cQ,I:cD -C -IB -OB -r -d 1 "
-#         "-b {BED} "
-#         "-o {output} "
-#         "-l {BED} "
-#         "{input.bam} "
-#         "{input.umi_fastq} "
-#         "\n"
-#         "samtools index {output}"
+rule CallMolecularConsensus:
+    input:
+        OUT_DIR + "/bam/{sample}.grouped.bam"
+    output:
+        OUT_DIR + "/bam/{sample}.consensus.bam"
+    shell:
+        "java -Xmx{RAM}g -jar {FGBIO_JAR} "
+        "CallMolecularConsensusReads "
+        "-i {input} -o {output} "
+        "--min-reads=1 "
+
+rule BamToFastq:
+    input:
+        OUT_DIR + "/bam/{sample}.consensus.bam"
+    output:
+        fq_one=OUT_DIR + "/fastq/{sample}.consensus.{FQ_ONE}.fastq",
+        fq_two=OUT_DIR + "/fastq/{sample}.consensus.{FQ_TWO}.fastq"
+    shell:
+        "picard SamToFastq "
+        "I={input} "
+        "FASTQ={output.fq_one} "
+        "SECOND_END_FASTQ={output.fq_two} "
+
+rule AlignConsensusFastq:
+    input:
+        fq_one=OUT_DIR + "/fastq/{sample}.consensus.{FQ_ONE}.fastq",
+        fq_two=OUT_DIR + "/fastq/{sample}.consensus.{FQ_TWO}.fastq"
+    output:
+        OUT_DIR + "/bam/{sample}.consensus.aligned.bam"
+    shell:
+        "bwa mem "
+        "-t {THREADS} -M "
+        "-R \"@RG\\tID:{RG}\\tSM:{RG}\" "
+        "{REF} {input.fq_one} {input.fq_two} "
+        "| samtools view -bh - > {output}"
+
+rule ClipBam:
+    input:
+        fq_one=OUT_DIR + "/fastq/{sample}.consensus.{FQ_ONE}.fastq,
+        fq_two=OUT_DIR + "/fastq/{sample}.consensus.{FQ_TWO}.fastq
+    output:
+        OUT_DIR + "/bam/{sample}.consensus.aligned.bam"
+    shell:
+        "bwa mem "
+        "-t {THREADS} -M "
+        "-R \"@RG\\tID:{RG}\\tSM:{RG}\" "
+        "{REF} {input.fq_one} {input.fq_two} "
+        "| samtools view -bh - > {output}"
