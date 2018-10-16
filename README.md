@@ -5,29 +5,29 @@ Analysis pipeline for Agilent SureSelectXT HS sequencing data.
 Shareable Project powered by <https://spro.io>
 
 PROJECT_DIR/    
-|── fastq    
-│   |── sample.R1.fastq    
-│   |── sample.R2.fastq    
-│   |── sample.R3.fastq     
+│── fastq    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.R1.fastq    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.R2.fastq    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── sample.R3.fastq     
 │── trimmed    
-│   |── sample.trimmed.R1.fastq    
-│   │── sample.trimmed.R2.fastq    
-│   └── sample.trimmed.R3.fastq    
-|── bam    
-│   |── sample.bam    
-│   |── sample.sort.bam    
-│   |── sample.sort.mate.bam     
-│   |── sample.umi.bam    
-│   |── sample.umi.grouped.bam    
-│   |── sample.consensus.bam     
-│   |── sample.consensus.aligned.bam    
-│   └── sample.consensus.aligned.clipped.bam    
-|── metrics    
-│   |── sample.family_size.txt    
-│   └── sample.hs.txt    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.trimmed.R1.fastq    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.trimmed.R2.fastq    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── sample.trimmed.R3.fastq    
+│── bam    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.bam    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.sort.bam    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.sort.mate.bam     
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.umi.bam    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.umi.grouped.bam    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.consensus.bam     
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.consensus.aligned.bam    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── sample.consensus.aligned.clipped.bam    
+│── metrics    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.family_size.txt    
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── sample.hs.txt    
 └── variant_calls    
-    |── sample.snps.vcf    
-    |── sample.snvs.vcf    
-    |── sample.indels.vcf    
-    |── sample.sv.vcf    
-    └── sample.cn.vcf    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.snps.vcf    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.snvs.vcf    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.indels.vcf    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│── sample.sv.vcf    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── sample.cn.vcf    
