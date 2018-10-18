@@ -35,7 +35,8 @@ rule TrimFastq:
     shell:
         "cutadapt "
         "-a {A_FWD} -A {A_REV} "
-        "-o {output.fq_one} -p {output.fq_two} "
+        "-m 40 "
+	"-o {output.fq_one} -p {output.fq_two} "
         "{input.fq_one} {input.fq_two}"
 
 rule AlignFastq:
