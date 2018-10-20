@@ -68,7 +68,7 @@ rule SetMateInformation:
     output:
         OUT_DIR + "/bam/{sample}.mate.bam"
     shell:
-        "java -Xmx{RAM}g -jar {FGBIO_JAR} "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
         "SetMateInformation "
         "-i {input} -o {output} "
 
@@ -91,7 +91,7 @@ rule GroupReadsByUmi:
         bam=OUT_DIR + "/bam/{sample}.grouped.bam",
         metrics=OUT_DIR + "/metrics/{sample}.familysize.txt"
     shell:
-        "java -Xmx{RAM}g -jar {FGBIO_JAR} "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
         "GroupReadsByUmi "
         "-i {input} -o {output.bam} "
         "-f {output.metrics} "
@@ -103,7 +103,7 @@ rule CallMolecularConsensus:
     output:
         OUT_DIR + "/bam/{sample}.consensus.bam"
     shell:
-        "java -Xmx{RAM}g -jar {FGBIO_JAR} "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
         "CallMolecularConsensusReads "
         "-i {input} -o {output} "
         "--min-reads=1 "
