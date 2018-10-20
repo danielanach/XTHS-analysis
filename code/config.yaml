@@ -27,7 +27,10 @@ ADAPTER_REV: "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT"
 REF_GENOME: "~/XTHS-analysis/data/genome/hg19/hg19.fa"
 BED: ""
 INTERVAL_LIST: "~/XTHS-analysis/data/interval_list/hg19_3131601_AIO_SolidTumor_Covered.interval_list"
+
+#SOFTWARE
 FGBIO_JAR: "~/XTHS-analysis/code/fgbio/target/scala-2.12/fgbio-0.7.0-9b76546-SNAPSHOT.jar"
+PICARD_JAR: "~/miniconda3/share/picard-2.18.14-0/picard.jar"
 
 # CPU information
 RAM: 20 # Gigabyes

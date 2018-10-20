@@ -14,6 +14,7 @@ BED=config["BED"]
 INTERVAL_LIST=config["BED"]
 
 FGBIO_JAR=config["FGBIO_JAR"]
+PICARD_JAR=config["PICARD_JAR"]
 
 THREADS=config["THREADS"]
 RAM=config["RAM"]
@@ -58,7 +59,7 @@ rule Sort:
     output:
         OUT_DIR + "/bam/{sample}.sort.bam"
     shell:
-        "picard SortSam "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SortSam "
         "I={input} O={output} "
         "SO=queryname"
 
@@ -115,7 +116,7 @@ rule BamToFastq:
         fq_one=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_ONE + ".fastq",
         fq_two=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_TWO + ".fastq"
     shell:
-        "picard SamToFastq "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SamToFastq "
         "I={input} "
         "FASTQ={output.fq_one} "
         "SECOND_END_FASTQ={output.fq_two} "
