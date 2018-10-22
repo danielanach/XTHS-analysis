@@ -26,7 +26,8 @@ rule all:
         expand(OUT_DIR + "/metrics/{sample}.familysize.txt", sample=SAMPLES),
         expand(OUT_DIR + "/metrics/{sample}.dedup.metrics.txt", sample=SAMPLES),
         expand(OUT_DIR + "/metrics/{sample}.HS.metrics.txt", sample=SAMPLES),
-	    expand(OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt", sample=SAMPLES)
+	expand(OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt", sample=SAMPLES),
+        expand(OUT_DIR + "/bam/final/{sample}.consensus.dedup.sort.bam",sample=SAMPLES)
 
 rule TrimFastq:
     input:
@@ -179,7 +180,7 @@ rule SortDuplicated:
     input:
         OUT_DIR + "/bam/final/{sample}.consensus.dedup.bam"
     output:
-        OUT_DIR + "/bam/final/{sample}.consensus.dedup.sort.bam"
+        OUT_DIR + "/bam/final/{sample}.sort.consensus.dedup.bam"
     shell:
         "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SortSam "
         "I={input} O={output} "
