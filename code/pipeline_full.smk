@@ -11,7 +11,7 @@ A_REV=config["ADAPTER_REV"]
 
 REF=config["REF_GENOME"]
 BED=config["BED"]
-INTERVAL_LIST=config["BED"]
+INTERVAL_LIST=config["INTERVAL_LIST"]
 
 FGBIO_JAR=config["FGBIO_JAR"]
 PICARD_JAR=config["PICARD_JAR"]
@@ -111,21 +111,9 @@ rule CallMolecularConsensus:
         "-i {input} -o {output} "
         "--min-reads=1 "
 
-rule FilterConsensusReads:
-    input:
-        OUT_DIR + "/bam/{sample}.consensus.bam"
-    output:
-        OUT_DIR + "/bam/{sample}.consensus.filter.bam"
-    shell:
-        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
-        "FilterConsensusReads "
-        "-i {input} -o {output} "
-        "-r {REF} "
-        "-M 1 -N 0 "
-
 rule BamToFastq:
     input:
-        OUT_DIR + "/bam/{sample}.consensus.filter.bam"
+        OUT_DIR + "/bam/{sample}.consensus.bam"
     output:
         fq_one=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_ONE + ".fastq",
         fq_two=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_TWO + ".fastq"
@@ -148,11 +136,21 @@ rule AlignConsensusFastq:
         "{REF} {input.fq_one} {input.fq_two} "
         "| samtools view -bh - > {output}"
 
+rule SortConsensus:
+    input:
+        bam=OUT_DIR + "/bam/{sample}.consensus.aligned.bam"
+    output:
+        bam=OUT_DIR + "/bam/final/{sample}.consensus.aligned.sort.bam"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SortSam "
+        "I={input.bam} O={output.bam} "
+        "SO=queryname"
+
 rule MarkDuplicates:
     input:
-        OUT_DIR + "/bam/{sample}.consensus.aligned.bam"
+        OUT_DIR + "/bam/final/{sample}.consensus.aligned.sort.bam"
     output:
-        bam=OUT_DIR + "/bam/{sample}.consensus.dedup.bam",
+        bam=OUT_DIR + "/bam/final{sample}.consensus.dedup.bam",
         metrics=OUT_DIR + "/metrics/{sample}.dedup.metrics.txt"
     shell:
         "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
@@ -163,7 +161,7 @@ rule MarkDuplicates:
 
 rule CollectHsMetrics:
     input:
-        OUT_DIR + "/bam/{sample}.consensus.dedup.bam"
+        OUT_DIR + "/bam/final/{sample}.consensus.dedup.bam"
     output:
         metrics=OUT_DIR + "/metrics/{sample}.HS.metrics.txt",
 	    per_t_metrics=OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt"
