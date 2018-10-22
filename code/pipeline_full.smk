@@ -150,7 +150,7 @@ rule MarkDuplicates:
     input:
         OUT_DIR + "/bam/final/{sample}.consensus.aligned.sort.bam"
     output:
-        bam=OUT_DIR + "/bam/final{sample}.consensus.dedup.bam",
+        bam=OUT_DIR + "/bam/final/{sample}.consensus.dedup.bam",
         metrics=OUT_DIR + "/metrics/{sample}.dedup.metrics.txt"
     shell:
         "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
@@ -174,3 +174,13 @@ rule CollectHsMetrics:
     	"BAIT_INTERVALS={INTERVAL_LIST} "
     	"PER_TARGET_COVERAGE={output.per_t_metrics} "
     	"COVERAGE_CAP=10000"
+
+rule SortDuplicated:
+    input:
+        OUT_DIR + "/bam/final/{sample}.consensus.dedup.bam"
+    output:
+        OUT_DIR + "/bam/final/{sample}.consensus.dedup.sort.bam"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SortSam "
+        "I={input} O={output} "
+        "SO=queryname"
