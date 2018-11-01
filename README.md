@@ -2,6 +2,21 @@
 
 Analysis pipeline for Agilent SureSelectXT HS sequencing data.
 
+# Additional software:
+fgbio
+
+```
+git clone https://github.com/fulcrumgenomics/fgbio.git
+sbt assembly
+cd fgbio/target/scala-2.12
+mv fgbio-<version>.jar fgbio.jar
+```
+
+VarDict
+```
+git clone --recursive https://github.com/AstraZeneca-NGS/VarDictJava.git
+```
+
 Shareable Project powered by <https://spro.io>
 
 PROJECT_DIR/    

@@ -10,6 +10,7 @@ SAMPLES:
   - "hybr4_S9"
   - "hybr5_S10"
   - "hybr5_S11"
+
 LANE: "L001"
 RG_NAME: "tissue"
 
@@ -26,10 +27,13 @@ ADAPTER_REV: "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT"
 REF_GENOME: "~/XTHS-analysis/data/genome/hg19/hg19.fa"
 BED: ""
 INTERVAL_LIST: "~/XTHS-analysis/data/interval_list/hg19_3131601_AIO_SolidTumor_Covered.interval_list"
-FGBIO_JAR: "~/XTHS-analysis/code/fgbio/target/scala-2.12/fgbio-0.7.0-9b76546-SNAPSHOT.jar"
+
+#SOFTWARE
+FGBIO_JAR: "~/XTHS-analysis/code/fgbio/target/scala-2.12/fgbio.jar"
+PICARD_JAR: "~/miniconda3/share/picard-2.18.14-0/picard.jar"
 
 # CPU information
-RAM: 20 # Gigabyes
+RAM: 25 # Gigabyes
 THREADS: 2
 
 # Project directory

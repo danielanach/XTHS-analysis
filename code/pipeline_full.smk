@@ -11,7 +11,7 @@ A_REV=config["ADAPTER_REV"]
 
 REF=config["REF_GENOME"]
 BED=config["BED"]
-INTERVAL_LIST=config["BED"]
+INTERVAL_LIST=config["INTERVAL_LIST"]
 
 FGBIO_JAR=config["FGBIO_JAR"]
 PICARD_JAR=config["PICARD_JAR"]
@@ -23,8 +23,11 @@ OUT_DIR=config["PROJECT_DIR"]
 
 rule all:
     input:
-        expand(OUT_DIR + "/bam/{sample}.consensus.aligned.bam", sample=SAMPLES),
-        expand(OUT_DIR + "/metrics/{sample}.familysize.txt", sample=SAMPLES)
+        expand(OUT_DIR + "/metrics/{sample}.familysize.txt", sample=SAMPLES),
+        expand(OUT_DIR + "/metrics/{sample}.dedup.metrics.txt", sample=SAMPLES),
+        expand(OUT_DIR + "/metrics/{sample}.HS.metrics.txt", sample=SAMPLES),
+	expand(OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt", sample=SAMPLES),
+        expand(OUT_DIR + "/bam/final/{sample}.sort.consensus.dedup.bam",sample=SAMPLES)
 
 rule TrimFastq:
     input:
@@ -133,3 +136,52 @@ rule AlignConsensusFastq:
         "-R \"@RG\\tID:{RG}\\tSM:{RG}\" "
         "{REF} {input.fq_one} {input.fq_two} "
         "| samtools view -bh - > {output}"
+
+rule SortConsensus:
+    input:
+        bam=OUT_DIR + "/bam/{sample}.consensus.aligned.bam"
+    output:
+        bam=OUT_DIR + "/bam/final/{sample}.consensus.aligned.sort.bam"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SortSam "
+        "I={input.bam} O={output.bam} "
+        "SO=queryname"
+
+rule MarkDuplicates:
+    input:
+        OUT_DIR + "/bam/final/{sample}.consensus.aligned.sort.bam"
+    output:
+        bam=OUT_DIR + "/bam/final/{sample}.consensus.dedup.bam",
+        metrics=OUT_DIR + "/metrics/{sample}.dedup.metrics.txt"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
+        "MarkDuplicates "
+        "I={input} O={output.bam} "
+    	"M={output.metrics} "
+    	"REMOVE_SEQUENCING_DUPLICATES=true "
+
+rule CollectHsMetrics:
+    input:
+        OUT_DIR + "/bam/final/{sample}.consensus.dedup.bam"
+    output:
+        metrics=OUT_DIR + "/metrics/{sample}.HS.metrics.txt",
+	    per_t_metrics=OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
+        "CollectHsMetrics "
+	    "I={input} O={output.metrics} "
+    	"R={REF} "
+    	"TARGET_INTERVALS={INTERVAL_LIST} "
+    	"BAIT_INTERVALS={INTERVAL_LIST} "
+    	"PER_TARGET_COVERAGE={output.per_t_metrics} "
+    	"COVERAGE_CAP=10000"
+
+rule SortDuplicated:
+    input:
+        OUT_DIR + "/bam/final/{sample}.consensus.dedup.bam"
+    output:
+        OUT_DIR + "/bam/final/{sample}.sort.consensus.dedup.bam"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SortSam "
+        "I={input} O={output} "
+        "SO=coordinate"
