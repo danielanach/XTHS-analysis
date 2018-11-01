@@ -2,7 +2,7 @@
 
 Analysis pipeline for Agilent SureSelectXT HS sequencing data.
 
-** NOTE: this pipeline is NOT ready for use **
+**NOTE: this pipeline is NOT ready for use**
 
 # Additional software:
 fgbio
