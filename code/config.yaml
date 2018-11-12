@@ -25,7 +25,7 @@ ADAPTER_REV: "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTAGATCTCGGTGGTCGCCGTATCATT"
 
 # Reference info
 REF_GENOME: "~/XTHS-analysis/data/genome/hg19/hg19.fa"
-BED: ""
+BED: "~/XTHS-analysis/data/bed/hg19_3131601_AIO_SolidTumor_Covered_stripped.bed"
 INTERVAL_LIST: "~/XTHS-analysis/data/interval_list/hg19_3131601_AIO_SolidTumor_Covered.interval_list"
 
 #SOFTWARE
