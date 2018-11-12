@@ -26,7 +26,8 @@ rule all:
         expand(OUT_DIR + "/metrics/{sample}.dedup.metrics.txt", sample=SAMPLES),
         expand(OUT_DIR + "/metrics/{sample}.HS.metrics.txt", sample=SAMPLES),
         expand(OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt", sample=SAMPLES),
-        expand(OUT_DIR + "/bam/{sample}.consensus.dedup.bam",sample=SAMPLES)
+        expand(OUT_DIR + "/bam/{sample}.consensus.dedup.bam",sample=SAMPLES),
+        expand(OUT_DIR + "/vcf/{sample}.vcf",sample=SAMPLES)
 
 rule TrimFastq:
     input:
@@ -163,26 +164,10 @@ rule FilterConsensusReads:
         "I=/dev/stdin O={output} "
         "SO=coordinate"
 
-rule ClipOverlappingReads:
-    input:
-        OUT_DIR + "/bam/{sample}.consensus.filter.bam"
-    output:
-        OUT_DIR + "/bam/{sample}.consensus.clip.bam"
-    threads: 2
-    shell:
-        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
-        "--compression=0 "
-        "ClipBam "
-        "-i {input} -o /dev/stdout "
-        "-r {REF} "
-        "--clip-overlapping-reads=true | "
-        "samtools view -b "
-        "-@ {threads} "
-        "-o {output} -"
 
 rule MarkDuplicates:
     input:
-        OUT_DIR + "/bam/{sample}.consensus.clip.bam"
+        OUT_DIR + "/bam/{sample}.consensus.filter.bam"
     output:
         bam=OUT_DIR + "/bam/{sample}.consensus.dedup.bam",
         metrics=OUT_DIR + "/metrics/{sample}.dedup.metrics.txt"
@@ -196,6 +181,9 @@ rule MarkDuplicates:
         "SortSam "
         "I=/dev/stdin O={output.bam} "
         "SO=coordinate"
+        "\n"
+        " "
+        "samtools index {output.bam}"
 
 rule CollectHsMetrics:
     input:
@@ -212,3 +200,17 @@ rule CollectHsMetrics:
     	"BAIT_INTERVALS={INTERVAL_LIST} "
     	"PER_TARGET_COVERAGE={output.per_t_metrics} "
     	"COVERAGE_CAP=10000 "
+
+rule CallVariants:
+    input:
+        OUT_DIR + "/bam/{sample}.consensus.dedup.bam"
+    output:
+        OUT_DIR + "/vcf/{sample}.vcf"
+    shell:
+        "VarDict "
+        "-b {input} -G {REF} "
+        "-N {wildcards.sample} "
+        "-c 1 -S 2 -E 3 -g 4 -z 1 -x 0 -d \" \" {BED} | "
+        "teststrandbias.R | "
+        "var2vcf_valid.pl "
+        "-N {wildcards.sample}.consensus.dedup -E -f 0.01 > {output} "
