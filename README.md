@@ -15,9 +15,22 @@ cd fgbio/target/scala-2.12
 mv fgbio-<version>.jar fgbio.jar
 ```
 
+gradle
+
+```
+wget https://services.gradle.org/distributions/gradle-4.10.2-all.zip
+sudo mkdir /opt/gradle
+sudo unzip -d /opt/gradle gradle-4.10.2-bin.zip
+ls /opt/gradle/gradle-4.10.2
+bin  docs  getting-started.html  init.d  lib  LICENSE  media  NOTICE  samples  src
+``
+
 VarDict
 ```
 git clone --recursive https://github.com/AstraZeneca-NGS/VarDictJava.git
+cd VarDictJava
+./gradlew clean installDist
+
 ```
 
 Shareable Project powered by <https://spro.io>
