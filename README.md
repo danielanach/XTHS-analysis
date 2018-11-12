@@ -23,15 +23,22 @@ sudo mkdir /opt/gradle
 sudo unzip -d /opt/gradle gradle-4.10.2-bin.zip
 ls /opt/gradle/gradle-4.10.2
 bin  docs  getting-started.html  init.d  lib  LICENSE  media  NOTICE  samples  src
-``
+```
 
-VarDict
+VarDictJava
+
 ```
 git clone --recursive https://github.com/AstraZeneca-NGS/VarDictJava.git
 cd VarDictJava
 ./gradlew clean installDist
+```
+
+You can add VarDictJava on PATH by adding this line to .bashrc:
 
 ```
+export PATH=/path/to/VarDict/bin:$PATH
+```
+
 
 Shareable Project powered by <https://spro.io>
 
