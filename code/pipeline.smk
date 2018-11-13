@@ -27,7 +27,7 @@ rule all:
         expand(OUT_DIR + "/metrics/{sample}.HS.metrics.txt", sample=SAMPLES),
         expand(OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt", sample=SAMPLES),
         expand(OUT_DIR + "/bam/{sample}.consensus.dedup.bam",sample=SAMPLES),
-        expand(OUT_DIR + "/vcf/{sample}.vcf",sample=SAMPLES)
+        expand(OUT_DIR + "/vcf/{sample}.annotate.vcf",sample=SAMPLES)
 
 rule TrimFastq:
     input:
@@ -214,3 +214,14 @@ rule CallVariants:
         "teststrandbias.R | "
         "var2vcf_valid.pl "
         "-N {wildcards.sample}.consensus.dedup -E -f 0.01 > {output} "
+
+rule AnnotateVCF:
+    input:
+        OUT_DIR + "/vcf/{sample}.vcf"
+    output:
+        OUT_DIR + "/vcf/{sample}.annotate.vcf"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar "
+        "~/XTHS-analysis/code/snpEff/SnpSift.jar "
+        "annotate ../data/dbsnp/00-All.vcf.gz "
+        "{input} > {output} "
