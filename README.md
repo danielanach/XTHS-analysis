@@ -39,6 +39,18 @@ You can add VarDictJava on PATH by adding this line to .bashrc:
 export PATH=/path/to/VarDict/bin:$PATH
 ```
 
+snpSift
+```
+wget http://sourceforge.net/projects/snpeff/files/snpEff_latest_core.zip
+unzip snpEff_latest_core.zip
+```
+
+download dbSNP database
+```
+wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-All.vcf.gz.tbi
+wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-All.vcf.gz
+```
+
 
 Shareable Project powered by <https://spro.io>
 
