@@ -15,10 +15,42 @@ cd fgbio/target/scala-2.12
 mv fgbio-<version>.jar fgbio.jar
 ```
 
-VarDict
+gradle
+
+```
+wget https://services.gradle.org/distributions/gradle-4.10.2-all.zip
+sudo mkdir /opt/gradle
+sudo unzip -d /opt/gradle gradle-4.10.2-bin.zip
+ls /opt/gradle/gradle-4.10.2
+bin  docs  getting-started.html  init.d  lib  LICENSE  media  NOTICE  samples  src
+```
+
+VarDictJava
+
 ```
 git clone --recursive https://github.com/AstraZeneca-NGS/VarDictJava.git
+cd VarDictJava
+./gradlew clean installDist
 ```
+
+You can add VarDictJava on PATH by adding this line to .bashrc:
+
+```
+export PATH=/path/to/VarDict/bin:$PATH
+```
+
+snpSift
+```
+wget http://sourceforge.net/projects/snpeff/files/snpEff_latest_core.zip
+unzip snpEff_latest_core.zip
+```
+
+download dbSNP database
+```
+wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-All.vcf.gz.tbi
+wget ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-All.vcf.gz
+```
+
 
 Shareable Project powered by <https://spro.io>
 

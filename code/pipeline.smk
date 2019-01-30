@@ -11,20 +11,23 @@ A_REV=config["ADAPTER_REV"]
 
 REF=config["REF_GENOME"]
 BED=config["BED"]
-INTERVAL_LIST=config["BED"]
+INTERVAL_LIST=config["INTERVAL_LIST"]
 
 FGBIO_JAR=config["FGBIO_JAR"]
 PICARD_JAR=config["PICARD_JAR"]
 
-THREADS=config["THREADS"]
 RAM=config["RAM"]
 
 OUT_DIR=config["PROJECT_DIR"]
 
 rule all:
     input:
-        expand(OUT_DIR + "/bam/{sample}.consensus.aligned.bam", sample=SAMPLES),
-        expand(OUT_DIR + "/metrics/{sample}.familysize.txt", sample=SAMPLES)
+        expand(OUT_DIR + "/metrics/{sample}.familysize.txt", sample=SAMPLES),
+        expand(OUT_DIR + "/metrics/{sample}.dedup.metrics.txt", sample=SAMPLES),
+        expand(OUT_DIR + "/metrics/{sample}.HS.metrics.txt", sample=SAMPLES),
+        expand(OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt", sample=SAMPLES),
+        expand(OUT_DIR + "/bam/{sample}.consensus.dedup.bam",sample=SAMPLES),
+        expand(OUT_DIR + "/vcf/{sample}.annotate.vcf",sample=SAMPLES)
 
 rule TrimFastq:
     input:
@@ -33,11 +36,11 @@ rule TrimFastq:
     output:
         fq_one=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_ONE + ".fastq.gz",
         fq_two=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_TWO + ".fastq.gz"
+    message: "Trimming adapters from fastqs on the following files {input}."
     shell:
         "cutadapt "
-        "-a {A_FWD} -A {A_REV} "
-        "-m 40 "
-	"-o {output.fq_one} -p {output.fq_two} "
+        "-a {A_FWD} -A {A_REV} -m 40 "
+        "-o {output.fq_one} -p {output.fq_two} "
         "{input.fq_one} {input.fq_two}"
 
 rule AlignFastq:
@@ -46,28 +49,24 @@ rule AlignFastq:
         fq_two=OUT_DIR + "/trimmed/{sample}.trimmed_" + FQ_TWO + ".fastq.gz"
     output:
         OUT_DIR + "/bam/{sample}.bam"
+    threads: 2
+    message: "Aligning fastqs with {threads} threads on the following files {input}."
     shell:
         "bwa mem "
-        "-t {THREADS} -M "
+        "-t {threads} -M "
         "-R \"@RG\\tID:{RG}\\tSM:{RG}\" "
-        "{REF} {input.fq_one} {input.fq_two} "
-        "| samtools view -bh - > {output}"
-
-rule Sort:
-    input:
-        OUT_DIR + "/bam/{sample}.bam"
-    output:
-        OUT_DIR + "/bam/{sample}.sort.bam"
-    shell:
-        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SortSam "
-        "I={input} O={output} "
-        "SO=queryname"
+        "{REF} {input.fq_one} {input.fq_two} | "
+        "samtools view -bh - | "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
+        "SortSam "
+        "I=/dev/stdin O={output} SO=queryname"
 
 rule SetMateInformation:
     input:
-        OUT_DIR + "/bam/{sample}.sort.bam"
+        OUT_DIR + "/bam/{sample}.bam"
     output:
         OUT_DIR + "/bam/{sample}.mate.bam"
+    message: "Setting mate information on the following files {input}."
     shell:
         "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
         "SetMateInformation "
@@ -79,8 +78,9 @@ rule AnnotateBam:
         fq_umi=OUT_DIR + "/fastq/{sample}_" + LANE + "_" + FQ_UMI + "_001.fastq.gz"
     output:
         OUT_DIR + "/bam/{sample}.umi.bam"
+    message: "Annotating bam with UMIs with {threads} threads on the following files {input}."
     shell:
-        "java -Xmx{RAM}g -jar {FGBIO_JAR} "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
         "AnnotateBamWithUmis "
         "-i {input.bam} -f {input.fq_umi} "
         "-o {output} "
@@ -91,45 +91,137 @@ rule GroupReadsByUmi:
     output:
         bam=OUT_DIR + "/bam/{sample}.grouped.bam",
         metrics=OUT_DIR + "/metrics/{sample}.familysize.txt"
+    message: "Grouping reads by UMI on the following files {input}.\n" +
+             "Minimum mapping quality = 10.\n" +
+             "The allowable number of edits between UMIs = 2."
+    threads: 2
     shell:
         "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
+        "--compression=0 "
         "GroupReadsByUmi "
-        "-i {input} -o {output.bam} "
+        "-i {input} -o /dev/stdout "
         "-f {output.metrics} "
-	    "-m 10 -s Edit -e 5 "
+        "-m 10 -s Edit -e 2 | "
+        "samtools view -b "
+        "-@ {threads} "
+        "-o {output.bam} "
 
-rule CallMolecularConsensus:
+rule CallConsensus:
     input:
         OUT_DIR + "/bam/{sample}.grouped.bam"
     output:
         OUT_DIR + "/bam/{sample}.consensus.bam"
+    message: "Calling consensus on the following files {input}.\n" +
+             "Minimum number of reads per UMI = 1."
     shell:
         "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
         "CallMolecularConsensusReads "
         "-i {input} -o {output} "
-        "--min-reads=1 "
+        "-R {RG} --min-reads=1 "
 
-rule BamToFastq:
+rule AlignConsensusBam:
     input:
         OUT_DIR + "/bam/{sample}.consensus.bam"
     output:
-        fq_one=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_ONE + ".fastq",
-        fq_two=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_TWO + ".fastq"
+        OUT_DIR + "/bam/{sample}.consensus.align.bam"
+    threads: 2
     shell:
         "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} SamToFastq "
         "I={input} "
-        "FASTQ={output.fq_one} "
-        "SECOND_END_FASTQ={output.fq_two} "
-
-rule AlignConsensusFastq:
-    input:
-        fq_one=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_ONE + ".fastq",
-        fq_two=OUT_DIR + "/fastq/{sample}.consensus_" + FQ_TWO + ".fastq"
-    output:
-        OUT_DIR + "/bam/{sample}.consensus.aligned.bam"
-    shell:
+        "FASTQ=/dev/stdout "
+        "INTERLEAVE=true NON_PF=true | "
         "bwa mem "
-        "-t {THREADS} -M "
+        "-t {threads} -p "
         "-R \"@RG\\tID:{RG}\\tSM:{RG}\" "
-        "{REF} {input.fq_one} {input.fq_two} "
-        "| samtools view -bh - > {output}"
+        "{REF} /dev/stdin | "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
+        "MergeBamAlignment "
+        "ALIGNED=/dev/stdin "
+        "UNMAPPED={input} "
+        "O={output} "
+        "R={REF} "
+        "ALIGNED_READS_ONLY=true "
+        "INCLUDE_SECONDARY_ALIGNMENTS=false "
+        "PRIMARY_ALIGNMENT_STRATEGY=BestMapq "
+        "SORT_ORDER=queryname "
+
+rule FilterConsensusReads:
+    input:
+        OUT_DIR + "/bam/{sample}.consensus.align.bam"
+    output:
+        OUT_DIR + "/bam/{sample}.consensus.filter.bam"
+    threads: 2
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {FGBIO_JAR} "
+        "--compression=0 "
+        "FilterConsensusReads "
+        "-i {input} "
+        "-o /dev/stdout "
+        "-r {REF} "
+        " -M 1 -E 0.05 -e 0.5 -N 20 -n 0.2 | "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
+        "SortSam "
+        "I=/dev/stdin O={output} "
+        "SO=coordinate"
+
+
+rule MarkDuplicates:
+    input:
+        OUT_DIR + "/bam/{sample}.consensus.filter.bam"
+    output:
+        bam=OUT_DIR + "/bam/{sample}.consensus.dedup.bam",
+        metrics=OUT_DIR + "/metrics/{sample}.dedup.metrics.txt"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
+        "MarkDuplicates "
+        "I={input} O=/dev/stdout "
+    	"M={output.metrics} "
+    	"REMOVE_SEQUENCING_DUPLICATES=true | "
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
+        "SortSam "
+        "I=/dev/stdin O={output.bam} "
+        "SO=coordinate"
+        "\n"
+        " "
+        "samtools index {output.bam}"
+
+rule CollectHsMetrics:
+    input:
+        OUT_DIR + "/bam/{sample}.consensus.dedup.bam"
+    output:
+        metrics=OUT_DIR + "/metrics/{sample}.HS.metrics.txt",
+	    per_t_metrics=OUT_DIR + "/metrics/{sample}.HS.metrics.per_target.txt"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar {PICARD_JAR} "
+        "CollectHsMetrics "
+	    "I={input} O={output.metrics} "
+    	"R={REF} "
+    	"TARGET_INTERVALS={INTERVAL_LIST} "
+    	"BAIT_INTERVALS={INTERVAL_LIST} "
+    	"PER_TARGET_COVERAGE={output.per_t_metrics} "
+    	"COVERAGE_CAP=10000 "
+
+rule CallVariants:
+    input:
+        OUT_DIR + "/bam/{sample}.consensus.dedup.bam"
+    output:
+        OUT_DIR + "/vcf/{sample}.vcf"
+    shell:
+        "VarDict "
+        "-b {input} -G {REF} "
+        "-N {wildcards.sample} "
+        "-c 1 -S 2 -E 3 -g 4 -z 1 -x 0 -d \" \" {BED} | "
+        "teststrandbias.R | "
+        "var2vcf_valid.pl "
+        "-N {wildcards.sample}.consensus.dedup -E -f 0.01 > {output} "
+
+rule AnnotateVCF:
+    input:
+        OUT_DIR + "/vcf/{sample}.vcf"
+    output:
+        OUT_DIR + "/vcf/{sample}.annotate.vcf"
+    shell:
+        "java -Xmx{RAM}g -XX:-UseParallelGC -jar "
+        "~/XTHS-analysis/code/snpEff/SnpSift.jar "
+        "annotate ../data/dbsnp/00-All.vcf.gz "
+        "{input} > {output} "
